@@ -1,30 +1,73 @@
 package main
 
 import (
-	"bufio"
+	"archive/zip"
+
+	"encoding/csv"
 	"fmt"
+	"io"
 	"os"
-	"strconv"
-	"strings"
+	"path/filepath"
+	//"strings"
 )
 
 func main() {
+	//src := "task.zip"
+	dest := "task_unpacked"
+	//unZip(src, dest)
+	if err := filepath.Walk(dest, walkerFunc); err != nil {
 
-	rawString, err := bufio.NewReader(os.Stdin).ReadString('\n')
-	if err != nil {
-		panic("error")
 	}
 
-	rawString = strings.ReplaceAll(rawString, ",", ".")
-	rawString = strings.ReplaceAll(rawString, " ", "")
-	rawString = strings.ReplaceAll(rawString, "\n", "")
-	rawString = strings.ReplaceAll(rawString, "\r", "")
-	cleanSlice := strings.Split(rawString, ";")
-	cleanSlice[0] = strings.ReplaceAll(cleanSlice[0], ";", "")
+}
 
-	x, _ := strconv.ParseFloat(cleanSlice[0], 64)
-	y, _ := strconv.ParseFloat(cleanSlice[1], 64)
+func walkerFunc(path string, info os.FileInfo, err error) error {
 
-	fmt.Printf("%.4f", x/y)
+	if err != nil {
+		return err
+	}
+	if info.IsDir() {
+		return nil
+	}
+	file, _ := os.Open(filepath.Join())
+	//fmt.Println(file)
+	reader := csv.NewReader(file)
+	records, err := reader.ReadAll()
+	if err != nil {
+		return nil
 
+	}
+	fmt.Println(records)
+	file.Close()
+
+	return nil
+}
+
+func unZip(src, dest string) {
+	src = "task.zip"
+	dest = "task_unpacked"
+
+	reader, err := zip.OpenReader(src)
+	if err != nil {
+		fmt.Println("error")
+	}
+	defer reader.Close()
+	for _, file := range reader.File {
+		fp := filepath.Join(dest, file.Name)
+		if file.FileInfo().IsDir() {
+			os.Mkdir(fp, os.ModePerm)
+			continue
+		}
+		os.MkdirAll(filepath.Dir(fp), os.ModePerm)
+		outFile, _ := os.OpenFile(fp, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, file.Mode())
+		inFile, _ := file.Open()
+
+		io.Copy(outFile, inFile)
+		csvReader := csv.NewReader(inFile)
+		records, _ := csvReader.ReadAll()
+		if len(records) > 0 {
+			fmt.Println(records)
+		}
+		outFile.Close()
+	}
 }

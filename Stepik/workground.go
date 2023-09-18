@@ -1,22 +1,20 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"os"
+	"time"
 )
 
+const now = 1589570165
+
 func main() {
-	file, _ := os.Open("task.data")
-	reader := bufio.NewReader(file)
-	defer file.Close()
-	counter := 1
-	for {
-		data, _ := reader.ReadString(';')
-		if data == "0;" {
-			fmt.Println(counter)
-		} else {
-			counter++
-		}
+
+	var minutes, sec int64
+	_, err := fmt.Scanf("%d мин. %d сек.", &minutes, &sec)
+	if err != nil {
+		return
 	}
+
+	fmt.Println(time.Unix(now+minutes*60+sec, 0).UTC().Format(time.UnixDate))
+
 }

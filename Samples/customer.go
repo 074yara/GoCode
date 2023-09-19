@@ -33,7 +33,7 @@ func main3() {
 
 	// Затем с помощью Buffer можем вызвать метод WriteJSON
 	var buf bytes.Buffer
-	err := c.WriteJSON(buf)
+	err := c.WriteJSON(&buf)
 	if err != nil {
 		log.Fatal(err)
 	}

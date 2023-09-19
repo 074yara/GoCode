@@ -2,19 +2,34 @@ package main
 
 import (
 	"fmt"
+	"sync"
 	"time"
 )
 
-const now = 1589570165
-
 func main() {
+	tick := time.NewTicker(time.Second)
+	defer tick.Stop()
 
-	var minutes, sec int64
-	_, err := fmt.Scanf("%d мин. %d сек.", &minutes, &sec)
-	if err != nil {
-		return
+	wg := new(sync.WaitGroup)
+
+	for i := 1; i <= 5; i++ {
+		wg.Add(1)
+		go worker(i, tick.C, wg)
 	}
 
-	fmt.Println(time.Unix(now+minutes*60+sec, 0).UTC().Format(time.UnixDate))
+	wg.Wait()
 
+	/*
+	 * worker 1 выполнил работу
+	 * worker 5 выполнил работу
+	 * worker 3 выполнил работу
+	 * worker 4 выполнил работу
+	 * worker 2 выполнил работу
+	 */
+}
+
+func worker(id int, limit <-chan time.Time, wg *sync.WaitGroup) {
+	defer wg.Done()
+	<-limit
+	fmt.Printf("worker %d выполнил работу\n", id)
 }

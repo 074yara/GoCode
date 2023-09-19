@@ -9,7 +9,6 @@ import (
 )
 
 var (
-	str     string
 	isRoman bool
 )
 

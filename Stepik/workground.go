@@ -2,34 +2,67 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"sync"
 	"time"
 )
 
+const N = 5
+
 func main() {
-	tick := time.NewTicker(time.Second)
-	defer tick.Stop()
+	z := 5
 
-	wg := new(sync.WaitGroup)
+	fn := func(x int) int {
+		time.Sleep(time.Duration(rand.Int31n(N)) * time.Second)
+		return x * 100
+	}
+	in1 := make(chan int, z)
+	in2 := make(chan int, z)
+	out := make(chan int, z)
 
-	for i := 1; i <= 5; i++ {
-		wg.Add(1)
-		go worker(i, tick.C, wg)
+	go merge2Channels(fn, in1, in2, out, z)
+
+	for i := 0; i < z; i++ {
+		in1 <- i
+		in2 <- i + 10
 	}
 
-	wg.Wait()
+	for i := 0; i < z; i++ {
+		fmt.Println(<-out)
 
-	/*
-	 * worker 1 выполнил работу
-	 * worker 5 выполнил работу
-	 * worker 3 выполнил работу
-	 * worker 4 выполнил работу
-	 * worker 2 выполнил работу
-	 */
+	}
+
 }
 
-func worker(id int, limit <-chan time.Time, wg *sync.WaitGroup) {
-	defer wg.Done()
-	<-limit
-	fmt.Printf("worker %d выполнил работу\n", id)
+func merge2Channels(fn func(int) int, in1 <-chan int, in2 <-chan int, out chan<- int, n int) {
+	wg := sync.WaitGroup{}
+	pipe1 := make(chan int)
+	pipe2 := make(chan int)
+
+	go func() {
+		for x := range in1 {
+			wg.Add(1)
+			go func(x int) {
+				defer wg.Done()
+				pipe1 <- fn(x)
+			}(x)
+		}
+	}()
+	go func() {
+		for y := range in2 {
+			wg.Add(1)
+			go func(y int) {
+				defer wg.Done()
+				pipe2 <- fn(y)
+			}(y)
+		}
+	}()
+	wg.Wait()
+	go func() {
+		for x := range pipe1 {
+			for y := range pipe2 {
+				out <- x + y
+			}
+		}
+	}()
 }

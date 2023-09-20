@@ -1,0 +1,39 @@
+package main
+
+import "fmt"
+
+func main() {
+	firstChan := make(chan int)
+	secondChan := make(chan int)
+	stopChan := make(chan struct{})
+	//stop := new(struct{})
+
+	go func() {
+		secondChan <- 24
+	}()
+
+	result := <-calculator(firstChan, secondChan, stopChan)
+
+	fmt.Println(result)
+
+}
+
+func calculator(firstChan <-chan int, secondChan <-chan int, stopChan <-chan struct{}) <-chan int {
+	outChan := make(chan int)
+	x := 0
+
+	go func() {
+		defer close(outChan)
+		select {
+		case x = <-firstChan:
+			outChan <- x * x
+		case x = <-secondChan:
+			outChan <- x * 3
+		case <-stopChan:
+			return
+
+		}
+	}()
+
+	return outChan
+}

@@ -10,59 +10,54 @@ import (
 const N = 5
 
 func main() {
-	z := 5
+	n := 5
 
 	fn := func(x int) int {
 		time.Sleep(time.Duration(rand.Int31n(N)) * time.Second)
 		return x * 100
 	}
-	in1 := make(chan int, z)
-	in2 := make(chan int, z)
-	out := make(chan int, z)
+	in1 := make(chan int, n)
+	in2 := make(chan int, n)
+	out := make(chan int, n)
 
-	go merge2Channels(fn, in1, in2, out, z)
+	merge2Channels(fn, in1, in2, out, n)
 
-	for i := 0; i < z; i++ {
-		in1 <- i
-		in2 <- i + 10
+	for i := 0; i < n+1; i++ {
+		in1 <- i * 5
+		in2 <- i * 10
 	}
 
-	for i := 0; i < z; i++ {
-		fmt.Println(<-out)
+	for i := 0; i < n; i++ {
+		fmt.Println("out", <-out)
 
 	}
 
 }
 
 func merge2Channels(fn func(int) int, in1 <-chan int, in2 <-chan int, out chan<- int, n int) {
-	wg := sync.WaitGroup{}
-	pipe1 := make(chan int)
-	pipe2 := make(chan int)
+	go func() {
+		wg := sync.WaitGroup{}
+		arr1 := make([]int, n)
+		arr2 := make([]int, n)
 
-	go func() {
-		for x := range in1 {
-			wg.Add(1)
-			go func(x int) {
+		for i := 0; i < n; i++ {
+			wg.Add(2)
+			x := <-in1
+			y := <-in2
+			go func(i int) {
+				arr1[i] = fn(x)
 				defer wg.Done()
-				pipe1 <- fn(x)
-			}(x)
-		}
-	}()
-	go func() {
-		for y := range in2 {
-			wg.Add(1)
-			go func(y int) {
+			}(i)
+			go func(i int) {
+				arr2[i] = fn(y)
 				defer wg.Done()
-				pipe2 <- fn(y)
-			}(y)
+			}(i)
 		}
-	}()
-	wg.Wait()
-	go func() {
-		for x := range pipe1 {
-			for y := range pipe2 {
-				out <- x + y
-			}
+		wg.Wait()
+		for i := 0; i < n; i++ {
+			out <- arr1[i] + arr2[i]
 		}
+
 	}()
+
 }

@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"math/rand"
-	"sync"
 	"time"
 )
 
@@ -38,33 +37,32 @@ func main() {
 //Функция запускает свое вычисление в фоне и возвращает канал, в который отправит результат по завершении.
 //Чтобы было понятнее, это можно реализовать так:
 
-type Worker struct {
-	sync.Mutex
-	sync.WaitGroup
-}
-
-func (w *Worker) Do(work func(int) int, x int, res *int) {
-	w.Add(1)
-	go func() {
-		y := work(x)
-		w.Lock()
-		*res += y
-		w.Unlock()
-		w.Done()
-	}()
-}
-
 func merge2Channels(fn func(int) int, in1 <-chan int, in2 <-chan int, out chan<- int, n int) {
+	futureIn1, futureIn2 := mapFuture(fn, in1, n), mapFuture(fn, in2, n)
 	go func() {
-		result := make([]int, n)
-		var w Worker
-		for i := range result {
-			w.Do(fn, <-in1, &result[i])
-			w.Do(fn, <-in2, &result[i])
-		}
-		w.Wait()
-		for i := range result {
-			out <- result[i]
+		for i := 0; i < n; i++ {
+			out <- <-<-futureIn1 + <-<-futureIn2
 		}
 	}()
+}
+
+// See http://www.golangpatterns.info/concurrency/futures
+func future(fn func(int) int, arg int) <-chan int {
+	out := make(chan int)
+	go func() {
+		defer close(out)
+		out <- fn(arg)
+	}()
+	return out
+}
+
+func mapFuture(fn func(int) int, in <-chan int, size int) <-chan (<-chan int) {
+	out := make(chan (<-chan int), size)
+	go func() {
+		defer close(out)
+		for x := range in {
+			out <- future(fn, x)
+		}
+	}()
+	return out
 }

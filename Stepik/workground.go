@@ -30,7 +30,7 @@ func (u Universe) Seed() {
 	}
 }
 
-// Set устанавливает состояние конкретной клетки.
+// Set устанавливает состояние конкретной клетки
 func (u Universe) Set(x, y int, b bool) {
 	u[y][x] = b
 }

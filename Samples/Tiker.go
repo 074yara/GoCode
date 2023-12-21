@@ -14,7 +14,7 @@ func main() {
 
 	for i := 1; i <= 5; i++ {
 		wg.Add(1)
-		go worker(i, tick.C, wg)
+		go worker2(i, tick.C, wg)
 	}
 
 	wg.Wait()
@@ -28,7 +28,7 @@ func main() {
 	 */
 }
 
-func worker(id int, limit <-chan time.Time, wg *sync.WaitGroup) {
+func worker2(id int, limit <-chan time.Time, wg *sync.WaitGroup) {
 	defer wg.Done()
 	<-limit
 	fmt.Printf("worker %d выполнил работу\n", id)

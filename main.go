@@ -26,6 +26,10 @@ func fib(len int) chan int {
 var filepath = "./_index.md"
 
 func main() {
+
+}
+
+func timeAndCounterWorker() {
 	var timeField, counterField []byte
 	var counter int
 	data, err := os.ReadFile(filepath)
@@ -51,29 +55,8 @@ func main() {
 		err = os.WriteFile(filepath, newData, 0644)
 		checkError(err)
 	}
-
-	/*
-		for {
-			time.Sleep(time.Second * 5)
-			for _, field := range fields {
-				if bytes.Contains(field, []byte("Текущее время:")) {
-					currTime := time.Now().Format("2006-01-02 15-04-05")
-					newField := []byte(fmt.Sprintf("Текущее время: %v", currTime))
-					data = bytes.Replace(data, field, newField, 1)
-					err = os.WriteFile(filepath, data, 0644)
-				}
-				if bytes.Contains(field, []byte("Счетчик:")) {
-					newField := []byte(fmt.Sprintf("Счетчик: %v", counter))
-					counter++
-					data = bytes.Replace(data, field, newField, 1)
-					err = os.WriteFile(filepath, data, 0644)
-				}
-			}
-		}
-
-	*/
-
 }
+
 func checkError(err error) {
 	if err != nil {
 		log.Fatal(err)

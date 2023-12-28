@@ -1,7 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"log"
+	"os"
+	"time"
 )
 
 func fib(len int) chan int {
@@ -19,10 +23,38 @@ func fib(len int) chan int {
 	return c
 }
 
-func main() {
-	arr := []int{4, 7, 3, 3, 5, 8, 9, 0, 5, 3, 2, 5, 7}
-	fmt.Println(quickSort(arr))
+var filepath = "./_index.md"
 
+func main() {
+	data, err := os.ReadFile(filepath)
+	fields := bytes.Split(data, []byte("\n"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	counter := 1
+	for {
+		time.Sleep(time.Second * 5)
+		for _, field := range fields {
+			if bytes.Contains(field, []byte("Текущее время:")) {
+				currTime := time.Now().Format("2006-01-02 15-04-05")
+				newField := []byte(fmt.Sprintf("Текущее время: %v", currTime))
+				data = bytes.Replace(data, field, newField, 1)
+				err = os.WriteFile(filepath, data, 0644)
+			}
+			if bytes.Contains(field, []byte("Счетчик:")) {
+				newField := []byte(fmt.Sprintf("Счетчик: %v", counter))
+				counter++
+				data = bytes.Replace(data, field, newField, 1)
+				err = os.WriteFile(filepath, data, 0644)
+			}
+		}
+	}
+
+}
+func checkError(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func quickSort(data []int) []int {
@@ -41,7 +73,6 @@ func quickSort(data []int) []int {
 			middlePart = append(middlePart, value)
 		case value > pivot:
 			highPart = append(highPart, value)
-
 		}
 	}
 	lowPart = quickSort(lowPart)
